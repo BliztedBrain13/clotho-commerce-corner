@@ -1,10 +1,9 @@
-
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ProductGrid } from "@/components/products/ProductGrid";
-import { products } from "@/data/products";
 import { Product } from "@/types";
+import { getProducts } from "@/services/localStorageService";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,7 +24,8 @@ import { Search, SlidersHorizontal } from "lucide-react";
 
 export default function ProductsPage() {
   const location = useLocation();
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>(products);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 200]);
@@ -34,6 +34,13 @@ export default function ProductsPage() {
 
   // Extract categories from products
   const categories = Array.from(new Set(products.map((p) => p.category)));
+
+  // Load products from localStorage
+  useEffect(() => {
+    const loadedProducts = getProducts();
+    setProducts(loadedProducts);
+    setFilteredProducts(loadedProducts);
+  }, []);
 
   // Parse query parameters
   useEffect(() => {
