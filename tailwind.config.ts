@@ -52,6 +52,14 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+                // Custom ecommerce theme colors
+                brand: {
+                    navy: '#1A2456',
+                    gold: '#DFC277',
+                    light: '#F9F8F6',
+                    muted: '#8A94A6',
+                    accent: '#E84855'
+                },
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
