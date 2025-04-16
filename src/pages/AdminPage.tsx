@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -8,30 +7,12 @@ import { Product } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import { AlertCircle, Edit, Trash2, Plus } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertCircle, Edit, Trash2, Plus, CalendarDays, User } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { getOrders, getCustomers } from "@/utils/db";
 
 export default function AdminPage() {
   const { user, isAdmin } = useAuth();
@@ -43,13 +24,29 @@ export default function AdminPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isNewProduct, setIsNewProduct] = useState(false);
   const [productForm, setProductForm] = useState<Partial<Product>>({});
+  const [orders, setOrders] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<any[]>([]);
   
-  // Redirect if not admin
   useEffect(() => {
     if (!isAdmin) {
       navigate("/");
     }
   }, [isAdmin, navigate]);
+  
+  useEffect(() => {
+    const loadData = async () => {
+      if (isAdmin) {
+        const [ordersData, customersData] = await Promise.all([
+          getOrders(),
+          getCustomers()
+        ]);
+        setOrders(ordersData);
+        setCustomers(customersData);
+      }
+    };
+    
+    loadData();
+  }, [isAdmin]);
   
   if (!user || !isAdmin) {
     return (
@@ -110,10 +107,8 @@ export default function AdminPage() {
   
   const handleSaveProduct = () => {
     if (isNewProduct) {
-      // Add new product
       setProducts((prev) => [...prev, productForm as Product]);
     } else {
-      // Update existing product
       setProducts((prev) =>
         prev.map((p) => (p.id === selectedProduct?.id ? { ...productForm as Product } : p))
       );
@@ -201,27 +196,96 @@ export default function AdminPage() {
           </TabsContent>
           
           <TabsContent value="orders">
-            <div className="bg-secondary/30 rounded-lg p-8 text-center">
-              <h3 className="text-lg font-medium mb-2">Order Management</h3>
-              <p className="text-muted-foreground">
-                Order management functionality would be connected to a real
-                database in a production environment.
-              </p>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-medium">Orders</h2>
+            </div>
+            
+            <div className="border rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Order ID</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Total</TableHead>
+                    <TableHead className="text-right">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {orders.map((order) => (
+                    <TableRow key={order.id}>
+                      <TableCell>#{order.id}</TableCell>
+                      <TableCell>{order.customerEmail}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                          {new Date(order.date).toLocaleDateString()}
+                        </div>
+                      </TableCell>
+                      <TableCell>${order.total?.toFixed(2)}</TableCell>
+                      <TableCell className="text-right">
+                        <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-100 text-green-700">
+                          {order.status || 'Completed'}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {orders.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                        No orders found
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
             </div>
           </TabsContent>
           
           <TabsContent value="customers">
-            <div className="bg-secondary/30 rounded-lg p-8 text-center">
-              <h3 className="text-lg font-medium mb-2">Customer Management</h3>
-              <p className="text-muted-foreground">
-                Customer management functionality would be connected to a real
-                database in a production environment.
-              </p>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-medium">Customers</h2>
+            </div>
+            
+            <div className="border rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Orders</TableHead>
+                    <TableHead className="text-right">Joined</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {customers.map((customer) => (
+                    <TableRow key={customer.email}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          {customer.name}
+                        </div>
+                      </TableCell>
+                      <TableCell>{customer.email}</TableCell>
+                      <TableCell>{customer.orderCount || 0}</TableCell>
+                      <TableCell className="text-right">
+                        {new Date(customer.joinedDate || Date.now()).toLocaleDateString()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {customers.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
+                        No customers found
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
             </div>
           </TabsContent>
         </Tabs>
         
-        {/* Edit Product Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="max-w-md">
             <DialogHeader>
@@ -336,7 +400,6 @@ export default function AdminPage() {
           </DialogContent>
         </Dialog>
         
-        {/* Delete Product Dialog */}
         <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <DialogContent className="max-w-md">
             <DialogHeader>
