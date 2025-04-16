@@ -1,5 +1,5 @@
 
-import { Product, BasketItem } from "@/types";
+import { Product } from "@/types";
 import { products as initialProducts } from "@/data/products";
 
 // Initialize products in localStorage if not exists
@@ -23,16 +23,6 @@ export const updateProduct = (product: Product) => {
     products[index] = product;
     localStorage.setItem('products', JSON.stringify(products));
   }
-};
-
-// Basket
-export const getBasketItems = (): BasketItem[] => {
-  const items = localStorage.getItem('basketItems');
-  return items ? JSON.parse(items) : [];
-};
-
-export const setBasketItems = (items: BasketItem[]) => {
-  localStorage.setItem('basketItems', JSON.stringify(items));
 };
 
 // Initialize data

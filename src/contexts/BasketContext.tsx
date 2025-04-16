@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
 import { BasketItem, Product } from "@/types";
-import { getBasketItems, setBasketItems } from "@/services/localStorageService";
+import { getBasketItems as dbGetBasketItems, saveBasketItem, removeBasketItem as dbRemoveBasketItem, clearBasket as dbClearBasket } from "@/utils/db";
 
 interface BasketContextType {
   items: BasketItem[];
@@ -18,56 +18,74 @@ export const BasketProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useState<BasketItem[]>([]);
 
   useEffect(() => {
-    const savedItems = getBasketItems();
-    if (savedItems) {
-      setItems(savedItems);
-    }
+    const loadItems = async () => {
+      try {
+        const savedItems = await dbGetBasketItems();
+        setItems(savedItems);
+      } catch (error) {
+        console.error("Error loading basket items:", error);
+        setItems([]);
+      }
+    };
+    loadItems();
   }, []);
 
-  const addItem = (product: Product, size: string) => {
-    setItems((prevItems) => {
-      const existingItemIndex = prevItems.findIndex(
+  const addItem = async (product: Product, size: string) => {
+    try {
+      const existingItemIndex = items.findIndex(
         (item) => item.id === product.id && item.size === size
       );
 
-      let newItems;
+      let newItems: BasketItem[];
       if (existingItemIndex >= 0) {
-        newItems = [...prevItems];
+        newItems = [...items];
         newItems[existingItemIndex].quantity += 1;
+        await saveBasketItem(newItems[existingItemIndex]);
       } else {
-        newItems = [...prevItems, { ...product, quantity: 1, size }];
+        const newItem: BasketItem = { ...product, quantity: 1, size };
+        await saveBasketItem(newItem);
+        newItems = [...items, newItem];
       }
-      
-      setBasketItems(newItems);
-      return newItems;
-    });
+      setItems(newItems);
+    } catch (error) {
+      console.error("Error adding item to basket:", error);
+    }
   };
 
-  const removeItem = (id: string, size: string) => {
-    setItems((prevItems) => {
-      const newItems = prevItems.filter(
-        (item) => !(item.id === id && item.size === size)
+  const removeItem = async (id: string, size: string) => {
+    try {
+      await dbRemoveBasketItem(id, size);
+      setItems((prevItems) =>
+        prevItems.filter((item) => !(item.id === id && item.size === size))
       );
-      setBasketItems(newItems);
-      return newItems;
-    });
+    } catch (error) {
+      console.error("Error removing item from basket:", error);
+    }
   };
 
-  const updateQuantity = (id: string, size: string, quantity: number) => {
-    setItems((prevItems) => {
-      const newItems = prevItems.map((item) =>
-        item.id === id && item.size === size
-          ? { ...item, quantity: Math.max(1, quantity) }
-          : item
-      );
-      setBasketItems(newItems);
-      return newItems;
-    });
+  const updateQuantity = async (id: string, size: string, quantity: number) => {
+    try {
+      const newItems = items.map((item) => {
+        if (item.id === id && item.size === size) {
+          const updatedItem = { ...item, quantity: Math.max(1, quantity) };
+          saveBasketItem(updatedItem);
+          return updatedItem;
+        }
+        return item;
+      });
+      setItems(newItems);
+    } catch (error) {
+      console.error("Error updating item quantity:", error);
+    }
   };
 
-  const clearBasket = () => {
-    setItems([]);
-    setBasketItems([]);
+  const clearBasket = async () => {
+    try {
+      await dbClearBasket();
+      setItems([]);
+    } catch (error) {
+      console.error("Error clearing basket:", error);
+    }
   };
 
   const itemCount = items.reduce((total, item) => total + item.quantity, 0);
