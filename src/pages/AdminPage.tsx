@@ -1,8 +1,8 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuth } from "@/contexts/AuthContext";
-import { products as initialProducts } from "@/data/products";
 import { Product } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,13 +12,20 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertCircle, Edit, Trash2, Plus, CalendarDays, User } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { getOrders, getCustomers } from "@/utils/db";
+import { toast } from "@/components/ui/sonner";
+import { 
+  getProducts, 
+  addProduct, 
+  updateProduct, 
+  deleteProduct, 
+  getOrders 
+} from "@/services/localStorageService";
 
 export default function AdminPage() {
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -33,20 +40,43 @@ export default function AdminPage() {
     }
   }, [isAdmin, navigate]);
   
+  // Load products and orders from local storage
   useEffect(() => {
-    const loadData = async () => {
-      if (isAdmin) {
-        const [ordersData, customersData] = await Promise.all([
-          getOrders(),
-          getCustomers()
-        ]);
-        setOrders(ordersData);
-        setCustomers(customersData);
-      }
-    };
-    
-    loadData();
+    if (isAdmin) {
+      loadData();
+    }
   }, [isAdmin]);
+  
+  const loadData = () => {
+    // Get products from localStorage
+    const productsData = getProducts();
+    setProducts(productsData);
+    
+    // Get orders from localStorage
+    const ordersData = getOrders();
+    setOrders(ordersData);
+    
+    // Extract customers from orders
+    const customersMap = new Map();
+    ordersData.forEach((order: any) => {
+      if (order.customerEmail && !customersMap.has(order.customerEmail)) {
+        customersMap.set(order.customerEmail, {
+          email: order.customerEmail,
+          name: order.customerName || order.name || 'Unknown',
+          orderCount: 1,
+          joinedDate: order.date
+        });
+      } else if (order.customerEmail) {
+        const customer = customersMap.get(order.customerEmail);
+        customersMap.set(order.customerEmail, {
+          ...customer,
+          orderCount: customer.orderCount + 1
+        });
+      }
+    });
+    
+    setCustomers(Array.from(customersMap.values()));
+  };
   
   if (!user || !isAdmin) {
     return (
@@ -71,7 +101,7 @@ export default function AdminPage() {
     } else {
       setSelectedProduct(null);
       setProductForm({
-        id: `${products.length + 1}`,
+        id: `product-${Date.now()}`,
         name: "",
         price: 0,
         description: "",
@@ -107,20 +137,30 @@ export default function AdminPage() {
   
   const handleSaveProduct = () => {
     if (isNewProduct) {
-      setProducts((prev) => [...prev, productForm as Product]);
+      // Add new product to localStorage
+      const newProduct = addProduct(productForm as Product);
+      setProducts((prev) => [...prev, newProduct]);
+      toast.success("Product added successfully");
     } else {
+      // Update product in localStorage
+      updateProduct(productForm as Product);
       setProducts((prev) =>
         prev.map((p) => (p.id === selectedProduct?.id ? { ...productForm as Product } : p))
       );
+      toast.success("Product updated successfully");
     }
     
     setIsEditDialogOpen(false);
+    loadData(); // Reload products to ensure UI is in sync with storage
   };
   
   const handleDeleteProduct = () => {
     if (selectedProduct) {
+      // Delete product from localStorage
+      deleteProduct(selectedProduct.id);
       setProducts((prev) => prev.filter((p) => p.id !== selectedProduct.id));
       setIsDeleteDialogOpen(false);
+      toast.success("Product deleted successfully");
     }
   };
   
@@ -164,32 +204,40 @@ export default function AdminPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {products.map((product) => (
-                    <TableRow key={product.id}>
-                      <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell className="capitalize">{product.category}</TableCell>
-                      <TableCell>${product.price.toFixed(2)}</TableCell>
-                      <TableCell>{product.stock}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleOpenEditDialog(product)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleOpenDeleteDialog(product)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
+                  {products.length > 0 ? (
+                    products.map((product) => (
+                      <TableRow key={product.id}>
+                        <TableCell className="font-medium">{product.name}</TableCell>
+                        <TableCell className="capitalize">{product.category}</TableCell>
+                        <TableCell>${product.price.toFixed(2)}</TableCell>
+                        <TableCell>{product.stock}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleOpenEditDialog(product)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleOpenDeleteDialog(product)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                        No products found
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -212,25 +260,26 @@ export default function AdminPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {orders.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell>#{order.id}</TableCell>
-                      <TableCell>{order.customerEmail}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                          {new Date(order.date).toLocaleDateString()}
-                        </div>
-                      </TableCell>
-                      <TableCell>${order.total?.toFixed(2)}</TableCell>
-                      <TableCell className="text-right">
-                        <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-100 text-green-700">
-                          {order.status || 'Completed'}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {orders.length === 0 && (
+                  {orders.length > 0 ? (
+                    orders.map((order) => (
+                      <TableRow key={order.id}>
+                        <TableCell>{order.id}</TableCell>
+                        <TableCell>{order.customerEmail || order.email || 'Anonymous'}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                            {new Date(order.date).toLocaleDateString()}
+                          </div>
+                        </TableCell>
+                        <TableCell>${order.total?.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">
+                          <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-100 text-green-700">
+                            {order.status || 'Completed'}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
                         No orders found

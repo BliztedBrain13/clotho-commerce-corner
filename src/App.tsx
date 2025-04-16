@@ -20,6 +20,12 @@ import ContactPage from "./pages/ContactPage";
 import PaymentMethodsPage from "./pages/PaymentMethodsPage";
 import NotFound from "./pages/NotFound";
 
+// Initialize DB
+import { initDB } from "./utils/db";
+
+// Initialize database
+initDB().catch(console.error);
+
 const queryClient = new QueryClient();
 
 const App = () => (

@@ -27,15 +27,37 @@ export const updateProduct = (product: Product) => {
 
 export const addProduct = (product: Product) => {
   const products = getProducts();
-  products.push(product);
+  const newProduct = {
+    ...product,
+    id: product.id || `product-${Date.now()}`,
+  };
+  products.push(newProduct);
   localStorage.setItem('products', JSON.stringify(products));
-  return product;
+  return newProduct;
 };
 
 export const deleteProduct = (id: string) => {
   const products = getProducts();
   const updatedProducts = products.filter(p => p.id !== id);
   localStorage.setItem('products', JSON.stringify(updatedProducts));
+};
+
+// Orders
+export const saveOrder = (order: any) => {
+  const orders = getOrders();
+  const newOrder = {
+    ...order,
+    id: `order-${Date.now()}`,
+    date: new Date().toISOString(),
+  };
+  orders.push(newOrder);
+  localStorage.setItem('orders', JSON.stringify(orders));
+  return newOrder.id;
+};
+
+export const getOrders = () => {
+  const orders = localStorage.getItem('orders');
+  return orders ? JSON.parse(orders) : [];
 };
 
 // Payment methods
