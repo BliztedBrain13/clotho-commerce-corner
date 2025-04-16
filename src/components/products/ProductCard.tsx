@@ -4,7 +4,9 @@ import { Link } from "react-router-dom";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useBasket } from "@/contexts/BasketContext";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, Check } from "lucide-react";
+import { toast } from "sonner";
+import { useState } from "react";
 
 interface ProductCardProps {
   product: Product;
@@ -13,9 +15,18 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useBasket();
   const { id, name, price, image, sizes } = product;
+  const [isAdding, setIsAdding] = useState(false);
 
   const handleAddToBasket = () => {
+    setIsAdding(true);
     addItem(product, sizes[0]);
+    
+    toast.success("Added to basket", {
+      description: `${name} has been added to your basket`,
+      duration: 2000,
+    });
+    
+    setTimeout(() => setIsAdding(false), 1000);
   };
 
   return (
@@ -41,9 +52,14 @@ export function ProductCard({ product }: ProductCardProps) {
           size="sm"
           className="w-full"
           onClick={handleAddToBasket}
+          disabled={isAdding}
         >
-          <ShoppingBag className="mr-2 h-4 w-4" />
-          Add to Basket
+          {isAdding ? (
+            <Check className="mr-2 h-4 w-4" />
+          ) : (
+            <ShoppingBag className="mr-2 h-4 w-4" />
+          )}
+          {isAdding ? "Added!" : "Add to Basket"}
         </Button>
       </CardFooter>
     </Card>
