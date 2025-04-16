@@ -1,3 +1,4 @@
+
 import { BasketItem } from "@/types";
 
 const DB_NAME = "ClothCoDB";
@@ -99,13 +100,16 @@ export async function saveOrder(order: any): Promise<number> {
   const tx = db.transaction(ORDERS_STORE, "readwrite");
   const store = tx.objectStore(ORDERS_STORE);
   
-  const id = await store.add({
+  const request = store.add({
     ...order,
     date: new Date().toISOString(),
   });
   
   return new Promise((resolve, reject) => {
-    tx.oncomplete = () => resolve(id as number);
+    tx.oncomplete = () => {
+      // Cast the result to number since we know this is an auto-increment store
+      resolve(request.result as number);
+    };
     tx.onerror = () => reject(tx.error);
   });
 }
