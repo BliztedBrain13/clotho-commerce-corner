@@ -1,4 +1,6 @@
 
+import { BasketItem } from "@/types";
+
 const DB_NAME = "ClothCoDB";
 const DB_VERSION = 1;
 const BASKET_STORE = "basket";
@@ -36,7 +38,12 @@ export async function saveBasketItem(item: BasketItem): Promise<void> {
   const store = tx.objectStore(BASKET_STORE);
   const key = `${item.id}-${item.size}`;
   await store.put({ ...item, key });
-  await tx.done;
+  
+  // Fix the 'done' property issue by returning a promise that resolves when transaction completes
+  return new Promise((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
 }
 
 export async function getBasketItems(): Promise<BasketItem[]> {
@@ -56,7 +63,12 @@ export async function removeBasketItem(id: string, size: string): Promise<void> 
   const tx = db.transaction(BASKET_STORE, "readwrite");
   const store = tx.objectStore(BASKET_STORE);
   await store.delete(`${id}-${size}`);
-  await tx.done;
+  
+  // Fix the 'done' property issue
+  return new Promise((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
 }
 
 export async function clearBasket(): Promise<void> {
@@ -64,5 +76,10 @@ export async function clearBasket(): Promise<void> {
   const tx = db.transaction(BASKET_STORE, "readwrite");
   const store = tx.objectStore(BASKET_STORE);
   await store.clear();
-  await tx.done;
+  
+  // Fix the 'done' property issue
+  return new Promise((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
 }
