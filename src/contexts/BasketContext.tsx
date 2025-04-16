@@ -1,12 +1,14 @@
+
 import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
 import { BasketItem, Product } from "@/types";
 import { getBasketItems as dbGetBasketItems, saveBasketItem, removeBasketItem as dbRemoveBasketItem, clearBasket as dbClearBasket } from "@/utils/db";
 
 interface BasketContextType {
   items: BasketItem[];
-  addItem: (product: Product, size: string) => void;
+  addItem: (product: Product, size: string, quantity?: number) => void;
   removeItem: (id: string, size: string) => void;
   updateQuantity: (id: string, size: string, quantity: number) => void;
+  updateSize: (id: string, oldSize: string, newSize: string) => void;
   clearBasket: () => void;
   itemCount: number;
   total: number;
@@ -30,7 +32,7 @@ export const BasketProvider = ({ children }: { children: ReactNode }) => {
     loadItems();
   }, []);
 
-  const addItem = async (product: Product, size: string) => {
+  const addItem = async (product: Product, size: string, quantity: number = 1) => {
     try {
       const existingItemIndex = items.findIndex(
         (item) => item.id === product.id && item.size === size
@@ -39,10 +41,10 @@ export const BasketProvider = ({ children }: { children: ReactNode }) => {
       let newItems: BasketItem[];
       if (existingItemIndex >= 0) {
         newItems = [...items];
-        newItems[existingItemIndex].quantity += 1;
+        newItems[existingItemIndex].quantity += quantity;
         await saveBasketItem(newItems[existingItemIndex]);
       } else {
-        const newItem: BasketItem = { ...product, quantity: 1, size };
+        const newItem: BasketItem = { ...product, quantity, size };
         await saveBasketItem(newItem);
         newItems = [...items, newItem];
       }
@@ -79,6 +81,44 @@ export const BasketProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const updateSize = async (id: string, oldSize: string, newSize: string) => {
+    try {
+      // Find the item with the old size
+      const itemToUpdate = items.find(item => item.id === id && item.size === oldSize);
+      if (!itemToUpdate) return;
+
+      // Check if there's already an item with the new size
+      const existingItemWithNewSize = items.find(item => item.id === id && item.size === newSize);
+      
+      if (existingItemWithNewSize) {
+        // If there's already an item with new size, add quantities and remove the old one
+        const updatedQuantity = itemToUpdate.quantity + existingItemWithNewSize.quantity;
+        
+        // Update the existing item with new size
+        await updateQuantity(id, newSize, updatedQuantity);
+        
+        // Remove the old one
+        await removeItem(id, oldSize);
+      } else {
+        // If there's no item with the new size, just update the size of the current item
+        const updatedItem = { ...itemToUpdate, size: newSize };
+        
+        // Remove item with old size
+        await dbRemoveBasketItem(id, oldSize);
+        
+        // Save item with new size
+        await saveBasketItem(updatedItem);
+        
+        // Update state
+        setItems(items.map(item => 
+          (item.id === id && item.size === oldSize) ? updatedItem : item
+        ));
+      }
+    } catch (error) {
+      console.error("Error updating item size:", error);
+    }
+  };
+
   const clearBasket = async () => {
     try {
       await dbClearBasket();
@@ -102,6 +142,7 @@ export const BasketProvider = ({ children }: { children: ReactNode }) => {
         addItem,
         removeItem,
         updateQuantity,
+        updateSize,
         clearBasket,
         itemCount,
         total,

@@ -10,7 +10,7 @@ interface BasketItemProps {
 }
 
 export function BasketItem({ item }: BasketItemProps) {
-  const { updateQuantity, removeItem } = useBasket();
+  const { updateQuantity, removeItem, updateSize } = useBasket();
   const { id, name, price, image, quantity, size, sizes } = item;
 
   const handleIncreaseQuantity = () => {
@@ -28,10 +28,9 @@ export function BasketItem({ item }: BasketItemProps) {
   };
 
   const handleSizeChange = (newSize: string) => {
-    // Remove current item
-    removeItem(id, size);
-    // Add item with new size
-    updateQuantity(id, newSize, quantity);
+    if (newSize !== size) {
+      updateSize(id, size, newSize);
+    }
   };
 
   return (

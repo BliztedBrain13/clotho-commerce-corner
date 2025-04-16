@@ -25,5 +25,41 @@ export const updateProduct = (product: Product) => {
   }
 };
 
+export const addProduct = (product: Product) => {
+  const products = getProducts();
+  products.push(product);
+  localStorage.setItem('products', JSON.stringify(products));
+  return product;
+};
+
+export const deleteProduct = (id: string) => {
+  const products = getProducts();
+  const updatedProducts = products.filter(p => p.id !== id);
+  localStorage.setItem('products', JSON.stringify(updatedProducts));
+};
+
+// Payment methods
+export const savePaymentMethod = (method: any) => {
+  const paymentMethods = getPaymentMethods();
+  paymentMethods.push({
+    ...method,
+    id: `card-${Date.now()}`,
+    lastFour: method.cardNumber.slice(-4),
+    createdAt: new Date().toISOString()
+  });
+  localStorage.setItem('paymentMethods', JSON.stringify(paymentMethods));
+};
+
+export const getPaymentMethods = () => {
+  const methods = localStorage.getItem('paymentMethods');
+  return methods ? JSON.parse(methods) : [];
+};
+
+export const deletePaymentMethod = (id: string) => {
+  const methods = getPaymentMethods();
+  const updatedMethods = methods.filter(m => m.id !== id);
+  localStorage.setItem('paymentMethods', JSON.stringify(updatedMethods));
+};
+
 // Initialize data
 initializeProducts();

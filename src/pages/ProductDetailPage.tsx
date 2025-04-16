@@ -12,14 +12,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ShoppingBag, ArrowLeft } from "lucide-react";
+import { ShoppingBag, ArrowLeft, Plus, Minus } from "lucide-react";
 import { ProductGrid } from "@/components/products/ProductGrid";
+import { toast } from "sonner";
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addItem } = useBasket();
   const [selectedSize, setSelectedSize] = useState<string>("");
+  const [quantity, setQuantity] = useState(1);
+  const [isAdding, setIsAdding] = useState(false);
   
   const product = products.find((p) => p.id === id);
   
@@ -41,11 +44,31 @@ export default function ProductDetailPage() {
   
   const handleAddToBasket = () => {
     if (!selectedSize) {
-      alert("Please select a size");
+      toast.error("Please select a size", {
+        description: "You need to select a size before adding to basket"
+      });
       return;
     }
     
-    addItem(product, selectedSize);
+    setIsAdding(true);
+    addItem(product, selectedSize, quantity);
+    
+    toast.success("Added to basket", {
+      description: `${quantity} x ${name} has been added to your basket`,
+      duration: 2000,
+    });
+    
+    setTimeout(() => {
+      setIsAdding(false);
+    }, 1000);
+  };
+
+  const increaseQuantity = () => {
+    setQuantity(prev => Math.min(prev + 1, stock));
+  };
+
+  const decreaseQuantity = () => {
+    setQuantity(prev => Math.max(prev - 1, 1));
   };
   
   // Get similar products (same category, excluding current product)
@@ -105,6 +128,31 @@ export default function ProductDetailPage() {
               </div>
               
               <div>
+                <h3 className="font-medium mb-2">Quantity</h3>
+                <div className="flex items-center border rounded w-32">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-10 w-10" 
+                    onClick={decreaseQuantity}
+                    disabled={quantity <= 1}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span className="flex-1 text-center">{quantity}</span>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-10 w-10" 
+                    onClick={increaseQuantity}
+                    disabled={quantity >= stock}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              
+              <div>
                 <p className="text-sm text-muted-foreground">
                   {stock > 10
                     ? "In Stock"
@@ -117,12 +165,12 @@ export default function ProductDetailPage() {
             
             <Button
               size="lg"
-              disabled={stock === 0}
+              disabled={stock === 0 || isAdding}
               className="w-full"
               onClick={handleAddToBasket}
             >
               <ShoppingBag className="mr-2 h-5 w-5" />
-              Add to Basket
+              {isAdding ? "Adding..." : "Add to Basket"}
             </Button>
             
             <div className="border-t pt-6 space-y-4">
