@@ -15,6 +15,10 @@ import BasketPage from "./pages/BasketPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import CheckoutSuccessPage from "./pages/CheckoutSuccessPage";
 import LoginPage from "./pages/LoginPage";
+import SignUpPage from "./pages/SignUpPage";
+import AboutPage from "./pages/AboutPage";
+import TermsPage from "./pages/TermsPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import AdminPage from "./pages/AdminPage";
 import ContactPage from "./pages/ContactPage";
 import PaymentMethodsPage from "./pages/PaymentMethodsPage";
@@ -44,6 +48,10 @@ const App = () => (
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignUpPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/terms" element={<TermsPage />} />
+              <Route path="/privacy" element={<PrivacyPolicyPage />} />
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/payment-methods" element={<PaymentMethodsPage />} />

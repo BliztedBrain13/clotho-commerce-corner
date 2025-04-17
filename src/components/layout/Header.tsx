@@ -45,6 +45,18 @@ export function Header() {
             >
               Products
             </Link>
+            <Link
+              to="/about"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              About Us
+            </Link>
+            <Link
+              to="/contact"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Contact
+            </Link>
             {isAdmin && (
               <Link
                 to="/admin"
@@ -108,9 +120,14 @@ export function Header() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Link to="/login">
-              <Button variant="ghost">Login</Button>
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link to="/login">
+                <Button variant="ghost">Login</Button>
+              </Link>
+              <Link to="/signup">
+                <Button>Sign Up</Button>
+              </Link>
+            </div>
           )}
         </div>
       </div>
