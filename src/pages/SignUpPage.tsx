@@ -17,6 +17,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, User, Mail, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function SignUpPage() {
   const [name, setName] = useState("");
@@ -28,6 +29,7 @@ export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { register } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,19 +54,17 @@ export default function SignUpPage() {
     setIsLoading(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Register the user with our AuthContext
+      await register(name, email, password);
       
-      // In a real app, you would register the user with a backend service
-      // For now, just show a success message and redirect
       toast({
         title: "Account created!",
-        description: "Your account has been successfully created.",
+        description: "Your account has been successfully created. You can now log in.",
       });
       
       navigate("/login");
     } catch (err) {
-      setError("Failed to create account. Please try again.");
+      setError((err as Error).message || "Failed to create account. Please try again.");
     } finally {
       setIsLoading(false);
     }
