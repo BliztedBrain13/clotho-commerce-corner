@@ -49,15 +49,41 @@ export const saveOrder = (order: any) => {
     ...order,
     id: `order-${Date.now()}`,
     date: new Date().toISOString(),
+    status: 'Completed'
   };
   orders.push(newOrder);
   localStorage.setItem('orders', JSON.stringify(orders));
+  
+  // Update user's order count if user is logged in
+  if (order.customerEmail) {
+    updateUserOrderCount(order.customerEmail);
+  }
+  
   return newOrder.id;
 };
 
 export const getOrders = () => {
   const orders = localStorage.getItem('orders');
   return orders ? JSON.parse(orders) : [];
+};
+
+export const getOrdersByUser = (email: string) => {
+  const orders = getOrders();
+  return orders.filter((order: any) => order.customerEmail === email);
+};
+
+const updateUserOrderCount = (email: string) => {
+  const registeredUsers = JSON.parse(localStorage.getItem("registeredUsers") || "[]");
+  const updatedUsers = registeredUsers.map((user: any) => {
+    if (user.email === email) {
+      return {
+        ...user,
+        orderCount: (user.orderCount || 0) + 1
+      };
+    }
+    return user;
+  });
+  localStorage.setItem("registeredUsers", JSON.stringify(updatedUsers));
 };
 
 // Payment methods

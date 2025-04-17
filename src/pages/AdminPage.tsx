@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -10,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, Edit, Trash2, Plus, CalendarDays, User } from "lucide-react";
+import { AlertCircle, Edit, Trash2, Plus, CalendarDays, User, Mail, Clock, ShoppingBag } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "@/components/ui/sonner";
 import { 
@@ -22,7 +21,7 @@ import {
 } from "@/services/localStorageService";
 
 export default function AdminPage() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, getUsers, getUserDetails } = useAuth();
   const navigate = useNavigate();
   
   const [products, setProducts] = useState<Product[]>([]);
@@ -33,6 +32,9 @@ export default function AdminPage() {
   const [productForm, setProductForm] = useState<Partial<Product>>({});
   const [orders, setOrders] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [isUserDetailsOpen, setIsUserDetailsOpen] = useState(false);
   
   useEffect(() => {
     if (!isAdmin) {
@@ -76,6 +78,10 @@ export default function AdminPage() {
     });
     
     setCustomers(Array.from(customersMap.values()));
+    
+    // Get all registered users
+    const allUsers = getUsers();
+    setUsers(allUsers);
   };
   
   if (!user || !isAdmin) {
@@ -164,6 +170,14 @@ export default function AdminPage() {
     }
   };
   
+  const viewUserDetails = (userId: string) => {
+    const userDetails = getUserDetails(userId);
+    if (userDetails) {
+      setSelectedUser(userDetails);
+      setIsUserDetailsOpen(true);
+    }
+  };
+  
   return (
     <MainLayout>
       <div className="container py-8">
@@ -181,6 +195,7 @@ export default function AdminPage() {
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="customers">Customers</TabsTrigger>
+            <TabsTrigger value="users">User Accounts</TabsTrigger>
           </TabsList>
           
           <TabsContent value="products">
@@ -333,6 +348,61 @@ export default function AdminPage() {
               </Table>
             </div>
           </TabsContent>
+          
+          <TabsContent value="users">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-medium">User Accounts</h2>
+            </div>
+            
+            <div className="border rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          {user.name}
+                        </div>
+                      </TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                          user.isAdmin ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"
+                        }`}>
+                          {user.isAdmin ? "Admin" : "Customer"}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => viewUserDetails(user.id)}
+                        >
+                          View Details
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {users.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
+                        No users found
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </TabsContent>
         </Tabs>
         
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -470,6 +540,74 @@ export default function AdminPage() {
                 onClick={handleDeleteProduct}
               >
                 Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        <Dialog open={isUserDetailsOpen} onOpenChange={setIsUserDetailsOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>User Details</DialogTitle>
+              <DialogDescription>
+                Detailed information about this user account.
+              </DialogDescription>
+            </DialogHeader>
+            
+            {selectedUser && (
+              <div className="space-y-4 py-2">
+                <div className="flex items-center gap-3">
+                  <User className="h-10 w-10 rounded-full bg-muted p-2" />
+                  <div>
+                    <h3 className="font-medium">{selectedUser.name}</h3>
+                    <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">Account created</p>
+                    <div className="flex items-center gap-2">
+                      <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">
+                        {new Date(selectedUser.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">Last login</p>
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">
+                        {new Date(selectedUser.lastLogin).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Role</p>
+                  <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                    selectedUser.isAdmin ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"
+                  }`}>
+                    {selectedUser.isAdmin ? "Admin" : "Customer"}
+                  </span>
+                </div>
+                
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Order history</p>
+                  <div className="flex items-center gap-2">
+                    <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">{selectedUser.orderCount} orders placed</span>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <DialogFooter>
+              <Button onClick={() => setIsUserDetailsOpen(false)}>
+                Close
               </Button>
             </DialogFooter>
           </DialogContent>

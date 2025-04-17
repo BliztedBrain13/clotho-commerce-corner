@@ -22,6 +22,7 @@ import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import AdminPage from "./pages/AdminPage";
 import ContactPage from "./pages/ContactPage";
 import PaymentMethodsPage from "./pages/PaymentMethodsPage";
+import OrdersPage from "./pages/OrdersPage";
 import NotFound from "./pages/NotFound";
 
 // Initialize DB
@@ -55,6 +56,7 @@ const App = () => (
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/payment-methods" element={<PaymentMethodsPage />} />
+              <Route path="/orders" element={<OrdersPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

@@ -9,6 +9,14 @@ interface AuthContextType {
   register: (name: string, email: string, password: string) => Promise<void>;
   isLoading: boolean;
   isAdmin: boolean;
+  getUsers: () => User[];
+  getUserDetails: (userId: string) => UserDetails | null;
+}
+
+interface UserDetails extends User {
+  createdAt: string;
+  lastLogin: string;
+  orderCount: number;
 }
 
 // Mock user data
@@ -59,6 +67,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           password: ADMIN_PASSWORD,
           name: ADMIN_USER.name,
           isAdmin: ADMIN_USER.isAdmin,
+          createdAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString(),
+          orderCount: 0
         },
         {
           id: REGULAR_USER.id,
@@ -66,6 +77,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           password: USER_PASSWORD,
           name: REGULAR_USER.name,
           isAdmin: REGULAR_USER.isAdmin,
+          createdAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString(),
+          orderCount: 0
         },
       ];
       localStorage.setItem("registeredUsers", JSON.stringify(initialUsers));
@@ -82,11 +96,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
       setUser(ADMIN_USER);
       localStorage.setItem("user", JSON.stringify(ADMIN_USER));
+      
+      // Update last login for admin
+      updateUserLastLogin(ADMIN_USER.id);
+      
       setIsLoading(false);
       return;
     } else if (email === USER_EMAIL && password === USER_PASSWORD) {
       setUser(REGULAR_USER);
       localStorage.setItem("user", JSON.stringify(REGULAR_USER));
+      
+      // Update last login for regular user
+      updateUserLastLogin(REGULAR_USER.id);
+      
       setIsLoading(false);
       return;
     }
@@ -106,11 +128,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       };
       setUser(userObject);
       localStorage.setItem("user", JSON.stringify(userObject));
+      
+      // Update last login
+      updateUserLastLogin(foundUser.id);
     } else {
       throw new Error("Invalid email or password");
     }
     
     setIsLoading(false);
+  };
+
+  const updateUserLastLogin = (userId: string) => {
+    const registeredUsers = JSON.parse(localStorage.getItem("registeredUsers") || "[]");
+    const updatedUsers = registeredUsers.map((u: any) => {
+      if (u.id === userId) {
+        return { ...u, lastLogin: new Date().toISOString() };
+      }
+      return u;
+    });
+    localStorage.setItem("registeredUsers", JSON.stringify(updatedUsers));
   };
 
   const register = async (name: string, email: string, password: string): Promise<void> => {
@@ -135,6 +171,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       password,
       name,
       isAdmin: false,
+      createdAt: new Date().toISOString(),
+      lastLogin: new Date().toISOString(),
+      orderCount: 0
     };
     
     // Add user to registered users
@@ -149,6 +188,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem("user");
   };
 
+  const getUsers = (): User[] => {
+    const registeredUsers = JSON.parse(localStorage.getItem("registeredUsers") || "[]");
+    return registeredUsers.map((u: any) => ({
+      id: u.id,
+      email: u.email,
+      name: u.name,
+      isAdmin: u.isAdmin || false
+    }));
+  };
+
+  const getUserDetails = (userId: string): UserDetails | null => {
+    const registeredUsers = JSON.parse(localStorage.getItem("registeredUsers") || "[]");
+    const user = registeredUsers.find((u: any) => u.id === userId);
+    
+    if (!user) return null;
+    
+    // Get order count from localStorage
+    const orders = JSON.parse(localStorage.getItem("orders") || "[]");
+    const userOrders = orders.filter((order: any) => 
+      order.customerEmail === user.email
+    );
+    
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      isAdmin: user.isAdmin || false,
+      createdAt: user.createdAt || new Date().toISOString(),
+      lastLogin: user.lastLogin || new Date().toISOString(),
+      orderCount: userOrders.length
+    };
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -158,6 +230,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         register,
         isLoading,
         isAdmin: user?.isAdmin || false,
+        getUsers,
+        getUserDetails
       }}
     >
       {children}
