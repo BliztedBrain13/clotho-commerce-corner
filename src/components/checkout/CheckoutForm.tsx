@@ -2,9 +2,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBasket } from "@/contexts/BasketContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { saveOrder } from "@/services/localStorageService";
 import {
   Card,
   CardContent,
@@ -17,11 +19,12 @@ import { CheckoutFormData } from "@/types";
 
 export function CheckoutForm() {
   const navigate = useNavigate();
-  const { total, clearBasket } = useBasket();
+  const { user } = useAuth();
+  const { items, total, clearBasket } = useBasket();
   const [isProcessing, setIsProcessing] = useState(false);
   const [formData, setFormData] = useState<CheckoutFormData>({
-    name: "",
-    email: "",
+    name: user?.name || "",
+    email: user?.email || "",
     address: "",
     city: "",
     postalCode: "",
@@ -43,6 +46,26 @@ export function CheckoutForm() {
     // Simulate payment processing
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
+      
+      // Save order to localStorage
+      const orderData = {
+        items: items,
+        total: total,
+        customerName: formData.name,
+        customerEmail: formData.email || user?.email,
+        shippingAddress: {
+          address: formData.address,
+          city: formData.city,
+          postalCode: formData.postalCode,
+          country: formData.country,
+        },
+        paymentMethod: {
+          lastFour: formData.cardNumber.slice(-4),
+        },
+      };
+      
+      saveOrder(orderData);
+      
       // Payment success
       clearBasket();
       navigate("/checkout/success");

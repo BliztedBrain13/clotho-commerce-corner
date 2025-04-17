@@ -7,6 +7,10 @@ const initializeProducts = () => {
   if (!localStorage.getItem('products')) {
     localStorage.setItem('products', JSON.stringify(initialProducts));
   }
+  // Initialize orders if not exists
+  if (!localStorage.getItem('orders')) {
+    localStorage.setItem('orders', JSON.stringify([]));
+  }
   return getProducts();
 };
 

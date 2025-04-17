@@ -1,14 +1,32 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useBasket } from "@/contexts/BasketContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
+import { getOrders } from "@/services/localStorageService";
 
 export default function CheckoutSuccessPage() {
   const { items } = useBasket();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const [lastOrder, setLastOrder] = useState<any>(null);
+
+  // Get the most recent order for this user
+  useEffect(() => {
+    if (user) {
+      const allOrders = getOrders();
+      const userOrders = allOrders
+        .filter((order: any) => order.customerEmail === user.email)
+        .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      
+      if (userOrders.length > 0) {
+        setLastOrder(userOrders[0]);
+      }
+    }
+  }, [user]);
 
   // Redirect if not coming from checkout flow
   useEffect(() => {
@@ -38,15 +56,15 @@ export default function CheckoutSuccessPage() {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span>Order Number:</span>
-              <span className="font-medium">ORD-{Math.floor(Math.random() * 1000000)}</span>
+              <span className="font-medium">{lastOrder?.id || 'Order Confirmed'}</span>
             </div>
             <div className="flex justify-between">
               <span>Date:</span>
-              <span>{new Date().toLocaleDateString()}</span>
+              <span>{lastOrder ? new Date(lastOrder.date).toLocaleDateString() : new Date().toLocaleDateString()}</span>
             </div>
             <div className="flex justify-between">
               <span>Payment Method:</span>
-              <span>Credit Card (•••• 4242)</span>
+              <span>Credit Card {lastOrder?.paymentMethod?.lastFour ? `(•••• ${lastOrder.paymentMethod.lastFour})` : ''}</span>
             </div>
             <div className="flex justify-between">
               <span>Shipping Method:</span>

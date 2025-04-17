@@ -3,29 +3,36 @@ import { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuth } from "@/contexts/AuthContext";
-import { getOrders } from "@/services/localStorageService";
+import { getOrdersByUser } from "@/services/localStorageService";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CalendarDays, Package } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function OrdersPage() {
   const { user } = useAuth();
   const [orders, setOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
-      const allOrders = getOrders();
-      // Filter orders for the current user
-      const userOrders = allOrders.filter(
-        (order: any) => order.customerEmail === user.email
-      );
+      // Use getOrdersByUser to specifically get this user's orders
+      const userOrders = getOrdersByUser(user.email);
       setOrders(userOrders);
       setIsLoading(false);
+      
+      if (userOrders.length === 0) {
+        toast({
+          title: "No orders found",
+          description: "You haven't placed any orders yet.",
+          variant: "default",
+        });
+      }
     }
-  }, [user]);
+  }, [user, toast]);
 
   if (!user) {
     return <Navigate to="/login" />;
