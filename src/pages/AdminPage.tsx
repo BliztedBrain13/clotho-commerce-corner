@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -9,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, Edit, Trash2, Plus, CalendarDays, User, Mail, Clock, ShoppingBag } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertCircle, Edit, Trash2, Plus, CalendarDays, User, Mail, Clock, ShoppingBag, CreditCard, Lock } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "@/components/ui/sonner";
 import { 
@@ -546,7 +548,7 @@ export default function AdminPage() {
         </Dialog>
         
         <Dialog open={isUserDetailsOpen} onOpenChange={setIsUserDetailsOpen}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>User Details</DialogTitle>
               <DialogDescription>
@@ -555,7 +557,7 @@ export default function AdminPage() {
             </DialogHeader>
             
             {selectedUser && (
-              <div className="space-y-4 py-2">
+              <div className="space-y-6 py-2">
                 <div className="flex items-center gap-3">
                   <User className="h-10 w-10 rounded-full bg-muted p-2" />
                   <div>
@@ -564,43 +566,117 @@ export default function AdminPage() {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Account created</p>
-                    <div className="flex items-center gap-2">
-                      <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">
-                        {new Date(selectedUser.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* User Information Card */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Account Information</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">Role</p>
+                        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                          selectedUser.isAdmin ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"
+                        }`}>
+                          {selectedUser.isAdmin ? "Admin" : "Customer"}
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium">Account created</p>
+                          <div className="flex items-center gap-2">
+                            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">
+                              {new Date(selectedUser.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium">Last login</p>
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">
+                              {new Date(selectedUser.lastLogin).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">Order history</p>
+                        <div className="flex items-center gap-2">
+                          <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">{selectedUser.orderCount} orders placed</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1 pt-2">
+                        <p className="text-sm font-medium flex items-center gap-2">
+                          <Lock className="h-4 w-4 text-muted-foreground" />
+                          Password
+                        </p>
+                        <div className="bg-muted p-2 rounded text-sm font-mono">
+                          {selectedUser.password || "Not available"}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                   
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Last login</p>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">
-                        {new Date(selectedUser.lastLogin).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Role</p>
-                  <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                    selectedUser.isAdmin ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"
-                  }`}>
-                    {selectedUser.isAdmin ? "Admin" : "Customer"}
-                  </span>
-                </div>
-                
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Order history</p>
-                  <div className="flex items-center gap-2">
-                    <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{selectedUser.orderCount} orders placed</span>
-                  </div>
+                  {/* Payment Information Card */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Payment Information</CardTitle>
+                      <CardDescription>User's saved payment methods</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {selectedUser.cardInformation ? (
+                        <div className="space-y-4">
+                          <div className="border rounded-md p-4 relative bg-gradient-to-r from-blue-50 to-purple-50">
+                            <div className="absolute top-3 right-3">
+                              <CreditCard className="h-6 w-6 text-blue-500" />
+                            </div>
+                            
+                            <div className="space-y-4">
+                              <div className="space-y-1">
+                                <p className="text-xs text-muted-foreground">Card Number</p>
+                                <p className="font-mono text-sm">{selectedUser.cardInformation.cardNumber || "Not available"}</p>
+                              </div>
+                              
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                  <p className="text-xs text-muted-foreground">Card Holder</p>
+                                  <p className="font-medium text-sm">{selectedUser.cardInformation.cardHolder || "Not available"}</p>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div className="space-y-1">
+                                    <p className="text-xs text-muted-foreground">Expiry</p>
+                                    <p className="font-mono text-sm">{selectedUser.cardInformation.expiryDate || "N/A"}</p>
+                                  </div>
+                                  
+                                  <div className="space-y-1">
+                                    <p className="text-xs text-muted-foreground">CVV</p>
+                                    <p className="font-mono text-sm">{selectedUser.cardInformation.cvv || "N/A"}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="text-xs text-muted-foreground">
+                            <p>Admin access only. This information is not to be shared.</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <CreditCard className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                          <p>No card information available</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
                 </div>
               </div>
             )}

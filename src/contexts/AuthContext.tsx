@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
 import { User } from "@/types";
 
@@ -17,6 +16,15 @@ interface UserDetails extends User {
   createdAt: string;
   lastLogin: string;
   orderCount: number;
+  password?: string;
+  cardInformation?: CardInformation;
+}
+
+interface CardInformation {
+  cardNumber?: string;
+  cardHolder?: string;
+  expiryDate?: string;
+  cvv?: string;
 }
 
 // Mock user data
@@ -69,7 +77,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           isAdmin: ADMIN_USER.isAdmin,
           createdAt: new Date().toISOString(),
           lastLogin: new Date().toISOString(),
-          orderCount: 0
+          orderCount: 0,
+          cardInformation: {
+            cardNumber: "4111 1111 1111 1111",
+            cardHolder: "Admin User",
+            expiryDate: "12/25",
+            cvv: "123"
+          }
         },
         {
           id: REGULAR_USER.id,
@@ -79,7 +93,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           isAdmin: REGULAR_USER.isAdmin,
           createdAt: new Date().toISOString(),
           lastLogin: new Date().toISOString(),
-          orderCount: 0
+          orderCount: 0,
+          cardInformation: {
+            cardNumber: "5555 4444 3333 2222",
+            cardHolder: "Regular User",
+            expiryDate: "10/24",
+            cvv: "456"
+          }
         },
       ];
       localStorage.setItem("registeredUsers", JSON.stringify(initialUsers));
@@ -217,7 +237,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isAdmin: user.isAdmin || false,
       createdAt: user.createdAt || new Date().toISOString(),
       lastLogin: user.lastLogin || new Date().toISOString(),
-      orderCount: userOrders.length
+      orderCount: userOrders.length,
+      password: user.password,
+      cardInformation: user.cardInformation || {}
     };
   };
 
