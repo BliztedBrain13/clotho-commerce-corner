@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -8,6 +9,7 @@ import { MobileSearchBar } from "@/components/products/filters/MobileSearchBar";
 import { MobileFilters } from "@/components/products/filters/MobileFilters";
 import { DesktopFilters } from "@/components/products/filters/DesktopFilters";
 import { ProductSort } from "@/components/products/ProductSort";
+import { Button } from "@/components/ui/button";
 
 export default function ProductsPage() {
   const location = useLocation();
