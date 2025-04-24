@@ -35,11 +35,12 @@ export default function ProductsPage() {
   // Extract categories from products
   const categories = Array.from(new Set(products.map((p) => p.category)));
 
-  // Load products from localStorage
+  // Load products and clear filters on mount
   useEffect(() => {
     const loadedProducts = getProducts();
     setProducts(loadedProducts);
     setFilteredProducts(loadedProducts);
+    clearFilters();
   }, []);
 
   // Parse query parameters
