@@ -4,23 +4,10 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { ProductGrid } from "@/components/products/ProductGrid";
 import { Product } from "@/types";
 import { getProducts } from "@/services/localStorageService";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { MobileSearchBar } from "@/components/products/filters/MobileSearchBar";
+import { MobileFilters } from "@/components/products/filters/MobileFilters";
+import { DesktopFilters } from "@/components/products/filters/DesktopFilters";
+import { ProductSort } from "@/components/products/ProductSort";
 
 export default function ProductsPage() {
   const location = useLocation();
@@ -32,7 +19,6 @@ export default function ProductsPage() {
   const [sortOption, setSortOption] = useState("featured");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  // Extract categories from products
   const categories = Array.from(new Set(products.map((p) => p.category)));
 
   // Load products and clear filters on mount
@@ -133,197 +119,43 @@ export default function ProductsPage() {
       <div className="container px-6 py-8">
         <h1 className="text-3xl font-bold mb-8">Products</h1>
         
-        {/* Mobile search and filter toggle */}
-        <div className="mb-6 flex items-center gap-4 lg:hidden">
-          <form onSubmit={handleSearch} className="flex-1">
-            <div className="relative">
-              <Input
-                type="search"
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pr-10"
-              />
-              <button
-                type="submit"
-                className="absolute inset-y-0 right-0 px-3 flex items-center"
-              >
-                <Search className="h-4 w-4 text-muted-foreground" />
-              </button>
-            </div>
-          </form>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-          </Button>
-        </div>
+        <MobileSearchBar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onSearchSubmit={handleSearch}
+          onToggleFilters={() => setMobileFiltersOpen(!mobileFiltersOpen)}
+        />
         
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Filters - desktop */}
-          <div className="hidden lg:block w-64 flex-shrink-0 space-y-6">
-            <div>
-              <h3 className="font-medium mb-4">Search</h3>
-              <form onSubmit={handleSearch}>
-                <div className="relative">
-                  <Input
-                    type="search"
-                    placeholder="Search products..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pr-10"
-                  />
-                  <button
-                    type="submit"
-                    className="absolute inset-y-0 right-0 px-3 flex items-center"
-                  >
-                    <Search className="h-4 w-4 text-muted-foreground" />
-                  </button>
-                </div>
-              </form>
-            </div>
-            
-            <div>
-              <h3 className="font-medium mb-4">Categories</h3>
-              <div className="space-y-2">
-                {categories.map((category) => (
-                  <div key={category} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`category-${category}`}
-                      checked={selectedCategory === category}
-                      onCheckedChange={(checked) =>
-                        handleCategoryChange(category, checked as boolean)
-                      }
-                    />
-                    <label
-                      htmlFor={`category-${category}`}
-                      className="text-sm cursor-pointer capitalize"
-                    >
-                      {category}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="font-medium mb-4">Price Range</h3>
-              <div className="flex items-center space-x-2">
-                <Input
-                  type="number"
-                  min="0"
-                  value={priceRange[0]}
-                  onChange={(e) =>
-                    setPriceRange([parseInt(e.target.value), priceRange[1]])
-                  }
-                  className="w-20"
-                />
-                <span>to</span>
-                <Input
-                  type="number"
-                  min="0"
-                  value={priceRange[1]}
-                  onChange={(e) =>
-                    setPriceRange([priceRange[0], parseInt(e.target.value)])
-                  }
-                  className="w-20"
-                />
-              </div>
-            </div>
-            
-            <Button variant="outline" size="sm" onClick={clearFilters}>
-              Clear Filters
-            </Button>
-          </div>
+          <DesktopFilters
+            categories={categories}
+            selectedCategory={selectedCategory}
+            priceRange={priceRange}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onCategoryChange={handleCategoryChange}
+            onPriceRangeChange={setPriceRange}
+            onClearFilters={clearFilters}
+            onSearchSubmit={handleSearch}
+          />
           
-          {/* Filters - mobile */}
           {mobileFiltersOpen && (
-            <div className="lg:hidden space-y-6 p-4 border rounded-lg mb-6">
-              <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="categories">
-                  <AccordionTrigger>Categories</AccordionTrigger>
-                  <AccordionContent>
-                    <div className="space-y-2 pt-2">
-                      {categories.map((category) => (
-                        <div key={category} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`mobile-category-${category}`}
-                            checked={selectedCategory === category}
-                            onCheckedChange={(checked) =>
-                              handleCategoryChange(category, checked as boolean)
-                            }
-                          />
-                          <label
-                            htmlFor={`mobile-category-${category}`}
-                            className="text-sm cursor-pointer capitalize"
-                          >
-                            {category}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-                
-                <AccordionItem value="price">
-                  <AccordionTrigger>Price Range</AccordionTrigger>
-                  <AccordionContent>
-                    <div className="flex items-center space-x-2 pt-2">
-                      <Input
-                        type="number"
-                        min="0"
-                        value={priceRange[0]}
-                        onChange={(e) =>
-                          setPriceRange([parseInt(e.target.value), priceRange[1]])
-                        }
-                        className="w-20"
-                      />
-                      <span>to</span>
-                      <Input
-                        type="number"
-                        min="0"
-                        value={priceRange[1]}
-                        onChange={(e) =>
-                          setPriceRange([priceRange[0], parseInt(e.target.value)])
-                        }
-                        className="w-20"
-                      />
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-              
-              <Button variant="outline" size="sm" onClick={clearFilters} className="w-full">
-                Clear Filters
-              </Button>
-            </div>
+            <MobileFilters
+              categories={categories}
+              selectedCategory={selectedCategory}
+              priceRange={priceRange}
+              onCategoryChange={handleCategoryChange}
+              onPriceRangeChange={setPriceRange}
+              onClearFilters={clearFilters}
+            />
           )}
           
-          {/* Product listing */}
           <div className="flex-1">
-            <div className="flex justify-between items-center mb-6">
-              <p className="text-sm text-muted-foreground">
-                {filteredProducts.length} products
-              </p>
-              
-              <Select
-                value={sortOption}
-                onValueChange={(value) => setSortOption(value)}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="featured">Featured</SelectItem>
-                  <SelectItem value="price-asc">Price: Low to High</SelectItem>
-                  <SelectItem value="price-desc">Price: High to Low</SelectItem>
-                  <SelectItem value="name-asc">Name: A to Z</SelectItem>
-                  <SelectItem value="name-desc">Name: Z to A</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <ProductSort
+              sortOption={sortOption}
+              onSortChange={setSortOption}
+              totalProducts={filteredProducts.length}
+            />
             
             {filteredProducts.length > 0 ? (
               <ProductGrid products={filteredProducts} />
