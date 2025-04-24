@@ -10,6 +10,7 @@ interface AuthContextType {
   isAdmin: boolean;
   getUsers: () => User[];
   getUserDetails: (userId: string) => UserDetails | null;
+  saveUserCardInformation: (cardInfo: CardInformation) => void;
 }
 
 interface UserDetails extends User {
@@ -243,6 +244,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   };
 
+  const saveUserCardInformation = (cardInfo: CardInformation) => {
+    if (!user) return;
+    
+    const registeredUsers = JSON.parse(localStorage.getItem("registeredUsers") || "[]");
+    const updatedUsers = registeredUsers.map((u: any) => {
+      if (u.id === user.id) {
+        return {
+          ...u,
+          cardInformation: cardInfo
+        };
+      }
+      return u;
+    });
+    
+    localStorage.setItem("registeredUsers", JSON.stringify(updatedUsers));
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -253,7 +271,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isLoading,
         isAdmin: user?.isAdmin || false,
         getUsers,
-        getUserDetails
+        getUserDetails,
+        saveUserCardInformation
       }}
     >
       {children}
