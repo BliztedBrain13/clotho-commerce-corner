@@ -106,6 +106,9 @@ export function Header() {
                   {user.name}
                 </DropdownMenuItem>
                 <DropdownMenuItem>
+                  <Link to="/profile" className="flex w-full">My Profile</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
                   <Link to="/orders" className="flex w-full">My Orders</Link>
                 </DropdownMenuItem>
                 {isAdmin && (

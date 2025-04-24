@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -24,6 +23,7 @@ import ContactPage from "./pages/ContactPage";
 import PaymentMethodsPage from "./pages/PaymentMethodsPage";
 import OrdersPage from "./pages/OrdersPage";
 import NotFound from "./pages/NotFound";
+import ProfilePage from "./pages/ProfilePage";
 
 // Initialize DB
 import { initDB } from "./utils/db";
@@ -57,6 +57,7 @@ const App = () => (
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/payment-methods" element={<PaymentMethodsPage />} />
               <Route path="/orders" element={<OrdersPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
