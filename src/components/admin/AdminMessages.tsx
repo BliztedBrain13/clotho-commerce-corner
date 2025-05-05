@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,7 +35,11 @@ interface Message {
   replies: Reply[];
 }
 
-export function AdminMessages() {
+interface AdminMessagesProps {
+  onMessageRead?: () => void;
+}
+
+export function AdminMessages({ onMessageRead }: AdminMessagesProps) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [reply, setReply] = useState("");
@@ -61,6 +64,17 @@ export function AdminMessages() {
       
       setMessages(updatedMessages);
       localStorage.setItem("adminMessages", JSON.stringify(updatedMessages));
+      
+      // Trigger event to notify other tabs about the change
+      if (typeof window !== 'undefined') {
+        const storageEvent = new Event('storage');
+        window.dispatchEvent(storageEvent);
+      }
+      
+      // Notify parent component about read message
+      if (onMessageRead) {
+        onMessageRead();
+      }
     }
   };
 

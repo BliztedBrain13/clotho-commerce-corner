@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -39,6 +38,7 @@ export default function AdminPage() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isUserDetailsOpen, setIsUserDetailsOpen] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState<number>(0);
+  const [activeTab, setActiveTab] = useState<string>("products");
   
   useEffect(() => {
     if (!isAdmin) {
@@ -56,11 +56,28 @@ export default function AdminPage() {
   // Check for unread messages
   useEffect(() => {
     if (isAdmin) {
-      const messages = JSON.parse(localStorage.getItem("adminMessages") || "[]");
-      const unreadCount = messages.filter((msg: any) => !msg.read).length;
-      setUnreadMessages(unreadCount);
+      // Update unread count whenever localStorage changes or tab changes
+      const checkUnreadMessages = () => {
+        const messages = JSON.parse(localStorage.getItem("adminMessages") || "[]");
+        const unreadCount = messages.filter((msg: any) => !msg.read).length;
+        setUnreadMessages(unreadCount);
+      };
+      
+      // Add event listener for storage changes (when messages are marked as read)
+      window.addEventListener("storage", checkUnreadMessages);
+      
+      // Initial check
+      checkUnreadMessages();
+      
+      // Set up interval to periodically check for unread messages
+      const interval = setInterval(checkUnreadMessages, 2000);
+      
+      return () => {
+        window.removeEventListener("storage", checkUnreadMessages);
+        clearInterval(interval);
+      };
     }
-  }, [isAdmin]);
+  }, [isAdmin, activeTab]);
   
   const loadData = () => {
     // Get products from localStorage
@@ -196,6 +213,16 @@ export default function AdminPage() {
     }
   };
   
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    // Refresh unread count when switching to messages tab
+    if (value === "messages") {
+      const messages = JSON.parse(localStorage.getItem("adminMessages") || "[]");
+      const unreadCount = messages.filter((msg: any) => !msg.read).length;
+      setUnreadMessages(unreadCount);
+    }
+  };
+  
   return (
     <MainLayout>
       <div className="container py-8">
@@ -208,7 +235,7 @@ export default function AdminPage() {
           </div>
         </div>
         
-        <Tabs defaultValue="products">
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList className="mb-6">
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
@@ -431,7 +458,12 @@ export default function AdminPage() {
           </TabsContent>
           
           <TabsContent value="messages">
-            <AdminMessages />
+            <AdminMessages onMessageRead={() => {
+              // Update unread count when a message is read
+              const messages = JSON.parse(localStorage.getItem("adminMessages") || "[]");
+              const unreadCount = messages.filter((msg: any) => !msg.read).length;
+              setUnreadMessages(unreadCount);
+            }} />
           </TabsContent>
         </Tabs>
         
