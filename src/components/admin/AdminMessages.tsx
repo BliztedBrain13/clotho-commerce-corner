@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { User, Calendar, File, Send, MessageSquare } from "lucide-react";
+import { User, Calendar, File, Send, MessageSquare, Download } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
@@ -104,6 +104,49 @@ export function AdminMessages() {
       toast.success("Reply sent successfully");
       setIsSubmitting(false);
     }, 800);
+  };
+
+  // Function to download attachment
+  const handleDownloadAttachment = (attachment: Attachment) => {
+    // Create a blob with mock content based on file type
+    let content = "";
+    let dataType = "text/plain";
+    
+    // Generate dummy content based on file type
+    if (attachment.type.startsWith("image/")) {
+      // For images, create a small SVG placeholder
+      content = `<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#ddd"/><text x="50%" y="50%" font-family="Arial" font-size="14" text-anchor="middle" dominant-baseline="middle" fill="#333">Image Placeholder</text></svg>`;
+      dataType = "image/svg+xml";
+    } else if (attachment.type === "application/pdf") {
+      // For PDFs, create a text file saying it's a PDF placeholder
+      content = "This is a placeholder for a PDF file.";
+      dataType = "text/plain";
+    } else if (attachment.type.startsWith("video/")) {
+      // For videos, create a text file saying it's a video placeholder
+      content = "This is a placeholder for a video file.";
+      dataType = "text/plain";
+    } else {
+      // For other types, create a generic placeholder text
+      content = `This is a placeholder for file: ${attachment.name}`;
+      dataType = "text/plain";
+    }
+
+    // Create a blob with the content
+    const blob = new Blob([content], { type: dataType });
+    const url = URL.createObjectURL(blob);
+    
+    // Create a download link and trigger click
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = attachment.name;
+    document.body.appendChild(link);
+    link.click();
+    
+    // Clean up
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast.success(`Downloading ${attachment.name}`);
   };
 
   const filteredMessages = messages.filter(message => {
@@ -219,12 +262,23 @@ export function AdminMessages() {
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium">Attachments:</h4>
                       {selectedMessage.attachments.map((attachment, i) => (
-                        <div key={i} className="flex items-center gap-2 bg-muted/50 p-2 rounded-md">
-                          <File className="h-4 w-4" />
-                          <span className="text-sm">{attachment.name}</span>
-                          <span className="text-xs text-muted-foreground">
-                            ({Math.round(attachment.size / 1024)}KB)
-                          </span>
+                        <div key={i} className="flex items-center justify-between bg-muted/50 p-2 rounded-md">
+                          <div className="flex items-center gap-2">
+                            <File className="h-4 w-4" />
+                            <span className="text-sm">{attachment.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              ({Math.round(attachment.size / 1024)}KB)
+                            </span>
+                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleDownloadAttachment(attachment)}
+                            className="flex items-center gap-1"
+                          >
+                            <Download className="h-3 w-3" />
+                            <span>Download</span>
+                          </Button>
                         </div>
                       ))}
                     </div>
