@@ -163,10 +163,10 @@ export function ProfilePayment() {
             <div className="space-y-2">
               <p className="font-medium">{savedCard.cardHolder}</p>
               <p className="text-muted-foreground">
-                •••• •••• •••• {savedCard.cardNumber.slice(-4)}
+                •••• •••• •••• {savedCard.cardNumber && savedCard.cardNumber.length >= 4 ? savedCard.cardNumber.slice(-4) : '****'}
               </p>
               <p className="text-sm text-muted-foreground">
-                Expires: {savedCard.expiryDate}
+                Expires: {savedCard.expiryDate || 'N/A'}
               </p>
             </div>
           </CardContent>

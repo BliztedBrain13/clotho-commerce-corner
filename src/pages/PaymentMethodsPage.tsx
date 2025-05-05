@@ -239,13 +239,13 @@ export default function PaymentMethodsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <CreditCard className="mr-2 h-5 w-5" />
-                  •••• •••• •••• {savedCard.cardNumber.slice(-4)}
+                  •••• •••• •••• {savedCard.cardNumber && savedCard.cardNumber.length >= 4 ? savedCard.cardNumber.slice(-4) : '****'}
                 </CardTitle>
-                <CardDescription>{savedCard.cardHolder}</CardDescription>
+                <CardDescription>{savedCard.cardHolder || 'Cardholder'}</CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Expires: {savedCard.expiryDate}
+                  Expires: {savedCard.expiryDate || 'N/A'}
                 </p>
               </CardContent>
               <CardFooter className="flex justify-between">
