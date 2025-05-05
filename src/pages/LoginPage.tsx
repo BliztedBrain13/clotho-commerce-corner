@@ -22,6 +22,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { login, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -29,6 +30,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsSubmitting(true);
     
     try {
       await login(email, password);
@@ -39,6 +41,7 @@ export default function LoginPage() {
       navigate("/");
     } catch (err) {
       setError((err as Error).message);
+      setIsSubmitting(false); // Ensure button becomes enabled again after error
     }
   };
 
@@ -99,8 +102,8 @@ export default function LoginPage() {
                 </div>
               </div>
               
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Signing in..." : "Sign in"}
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? "Signing in..." : "Sign in"}
               </Button>
             </form>
             
