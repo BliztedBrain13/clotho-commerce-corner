@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, Edit, Trash2, Plus, CalendarDays, User, Mail, Clock, ShoppingBag, CreditCard, Lock } from "lucide-react";
+import { AlertCircle, Edit, Trash2, Plus, CalendarDays, User, Mail, Clock, ShoppingBag, CreditCard, Lock, MessageSquare, Bell } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "@/components/ui/sonner";
 import { 
@@ -21,6 +21,7 @@ import {
   deleteProduct, 
   getOrders 
 } from "@/services/localStorageService";
+import { AdminMessages } from "@/components/admin/AdminMessages";
 
 export default function AdminPage() {
   const { user, isAdmin, getUsers, getUserDetails } = useAuth();
@@ -37,6 +38,7 @@ export default function AdminPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isUserDetailsOpen, setIsUserDetailsOpen] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState<number>(0);
   
   useEffect(() => {
     if (!isAdmin) {
@@ -48,6 +50,15 @@ export default function AdminPage() {
   useEffect(() => {
     if (isAdmin) {
       loadData();
+    }
+  }, [isAdmin]);
+  
+  // Check for unread messages
+  useEffect(() => {
+    if (isAdmin) {
+      const messages = JSON.parse(localStorage.getItem("adminMessages") || "[]");
+      const unreadCount = messages.filter((msg: any) => !msg.read).length;
+      setUnreadMessages(unreadCount);
     }
   }, [isAdmin]);
   
@@ -84,6 +95,11 @@ export default function AdminPage() {
     // Get all registered users
     const allUsers = getUsers();
     setUsers(allUsers);
+    
+    // Check for unread messages
+    const messages = JSON.parse(localStorage.getItem("adminMessages") || "[]");
+    const unreadCount = messages.filter((msg: any) => !msg.read).length;
+    setUnreadMessages(unreadCount);
   };
   
   if (!user || !isAdmin) {
@@ -198,6 +214,14 @@ export default function AdminPage() {
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="customers">Customers</TabsTrigger>
             <TabsTrigger value="users">User Accounts</TabsTrigger>
+            <TabsTrigger value="messages" className="relative">
+              Messages
+              {unreadMessages > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">
+                  {unreadMessages}
+                </span>
+              )}
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="products">
@@ -404,6 +428,10 @@ export default function AdminPage() {
                 </TableBody>
               </Table>
             </div>
+          </TabsContent>
+          
+          <TabsContent value="messages">
+            <AdminMessages />
           </TabsContent>
         </Tabs>
         
